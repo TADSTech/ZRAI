@@ -1,0 +1,11 @@
+{
+  "name": "zrai-rules",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript sanitization rule layer for ZRAI, embedded/loaded by the Rust core.",
+  "scripts": {
+    "test": "bun test",
+    "build": "bun build src/sanitize.ts --outfile dist/sanitize.js --format=iife"
+  }
+}

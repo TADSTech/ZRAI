@@ -6,6 +6,9 @@ build/
 *.tsbuildinfo
 *.lockb
 
+# --- generated rules bundle (rebuild with `cd rules && bun run build`) ---
+rules/dist/
+
 # --- local config that may contain secrets ---
 zrai.toml
 .env
