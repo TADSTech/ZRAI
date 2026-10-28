@@ -1,0 +1,21 @@
+# --- dependencies / build artifacts (stack-agnostic) ---
+node_modules/
+target/
+dist/
+build/
+*.tsbuildinfo
+*.lockb
+
+# --- local config that may contain secrets ---
+zrai.toml
+.env
+.env.*
+
+# --- logs / scratch ---
+*.log
+.pdf_extract*
+*.tmp
+
+# --- OS ---
+.DS_Store
+Thumbs.db
