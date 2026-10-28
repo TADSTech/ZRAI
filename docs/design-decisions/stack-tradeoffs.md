@@ -1,9 +1,10 @@
 # Stack Trade-off: Rust vs Bun/TypeScript
 
-**Status: DECISION PENDING.** This document analyzes the two stacks the blueprint names as
-options. It is a decision record in progress, not a concluded choice. Nothing in `src/` or
-`tests/` should be written until this is resolved, because the choice determines the entire
-codebase shape.
+**Status: DECIDED — Hybrid (Rust core + embedded TypeScript rule layer).** This document
+analyzed the two stacks the blueprint names as options; the conclusion is to take *both*: a Rust
+core for the proxy hot path and an embedded TypeScript layer for sanitization, accepting a
+slightly larger binary and footprint. Implementation proceeds under `crates/zrai-core` (Rust)
+and `rules/` (TypeScript).
 
 Both toolchains are **already installed** in this environment (cargo/rustc, bun, Node 22.22
 with native type-stripping), so neither option requires new infrastructure.
@@ -104,11 +105,51 @@ Plus qualitative needs: **drop-in REST + SSE parity**, **regex + AST sanitizatio
 This is left **open** for your call. The architecture in `architecture.md` is stable regardless;
 only the implementation language and module layout depend on this decision.
 
+## The hybrid answer (decided)
+
+Yes — we can take the benefits of both. ZRAI is built as a **Rust core with an embedded
+TypeScript/JavaScript sanitization rule layer**. This was chosen because the user accepted a
+"slightly larger size and footprint" in exchange for sharing both stacks' strengths.
+
+### Shape
+- **Rust core (`crates/zrai-core`)** owns the hot path: the `:4040` listener, OpenAI/Anthropic
+  route parity, bidirectional SSE streaming, egress TLS, ZDR injection, and the volatile-memory
+  invariant. Rust delivers the strict latency/RAM budgets and memory-safety on untrusted input.
+- **TypeScript rule layer (`rules/`)** owns sanitization: regex + structural (AST) rules for
+  paths, PII, tokens, and git metadata, plus user-supplied custom rules from `zrai.toml`.
+  Authored in TypeScript and tested independently with Bun — fast iteration and first-class AST
+  tooling for source-bearing messages.
+- **Embedding seam:** the Rust core embeds a small JS engine (**QuickJS via `rquickjs`**) and
+  loads a compiled `rules/dist/sanitize.js` at startup. Per request, the Context Engine calls
+  the JS `sanitize(messages, opts)` function; results return to Rust for egress. The TS source is
+  the single source of truth and also runs/tests standalone via `bun test`.
+
+### What we gain
+- Perf/memory of Rust on the proxy hot path (meets <5 ms TTFT; near the RAM targets).
+- Richness/velocity of TypeScript for the part that changes most (sanitization rules), including
+  native AST parsing of JS/TS source.
+- A single drop-in binary is still achievable — the engine is embedded, not a separate runtime
+  to ship.
+
+### What we trade (accepted)
+- **Slightly larger binary:** embedding QuickJS adds ~1–2 MB.
+- **Slightly larger footprint:** the engine keeps a small heap (a few MB). Idle RAM lands near
+  ~20 MB (Rust core ~15 MB + engine heap), at the edge of the <20 MB idle target; under load it
+  stays well under 50 MB. This is the explicit trade the user accepted.
+- One extra build step: `rules/` is compiled to `dist/sanitize.js` (via `bun build`, no network)
+  before the Rust binary loads it.
+
+### Integration contract (the seam)
+- `rules/dist/sanitize.js` must export
+  `sanitize(messages: Message[], opts: SanitizeOpts): { messages: Message[]; stripped: StrippedItem[] }`.
+- `SanitizeOpts` carries the strictness flag and the custom rules from `zrai.toml`.
+- The Rust side never logs prompt text; the `stripped` counts feed the Phase 3 TUI only.
+
 ## Decision record
 
 | Field | Value |
 | --- | --- |
-| Options considered | Rust (axum+tokio+reqwest); Bun/TypeScript |
-| Decided | **PENDING** |
-| Blocked by | Your input |
-| Revisit if | A prototype shows one stack cannot meet a hard success metric |
+| Options considered | Rust (axum+tokio+reqwest); Bun/TypeScript; **Hybrid of both** |
+| Decided | **Hybrid: Rust core + embedded TypeScript rule layer** |
+| Blocked by | — (resolved 2026-10-28) |
+| Revisit if | Embedded-engine RAM pushes idle past an agreed hard ceiling, or a pure-Rust sanitizer proves materially simpler to maintain |

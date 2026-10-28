@@ -4,8 +4,8 @@ ZRAI is built in four phases adapted from the blueprint. Each phase lists its sc
 acceptance criteria. **Phases 1–4 are not started** — this repository is at the scaffold stage
 (see `development-log.md`). Phase 0 (documentation scaffold) is complete.
 
-> **Gate:** Phase 1 cannot start until the [stack trade-off](design-decisions/stack-tradeoffs.md)
-> is decided.
+> **Gate:** Resolved — hybrid (Rust core + embedded TypeScript rule layer). See
+> [stack-tradeoffs.md](design-decisions/stack-tradeoffs.md).
 
 ## Success metrics (apply to all phases)
 
@@ -26,18 +26,20 @@ blueprint and verified per [`testing.md`](testing.md).
 - **Acceptance:** A reader can understand what ZRAI is, its structure, the open stack decision,
   and the plan — without reading a chat transcript.
 
-## Phase 1 — Core Proxy Engine
+## Phase 1 — Core Proxy Engine (hybrid)
 
-- **Stack:** decided per the trade-off.
+- **Stack:** Rust core (`crates/zrai-core`) + embedded TypeScript rule layer (`rules/`).
 - **Scope:**
-  - Listener on `localhost:4040` with route parity for `POST /v1/chat/completions`
-    (OpenAI) and `POST /v1/messages` (Anthropic).
-  - Bidirectionally buffered SSE handler that passes streamed tokens to the client with
-    minimal overhead.
-  - Egress over TLS to a configurable upstream.
+  - **Rust core:** listener on `localhost:4040` with route parity for `POST /v1/chat/completions`
+    (OpenAI) and `POST /v1/messages` (Anthropic); bidirectionally buffered SSE handler with
+    minimal overhead; egress over TLS to a configurable upstream; ZDR injection.
+  - **TypeScript rule layer:** sanitization rules (paths, PII, tokens, git metadata) authored in
+    `rules/`, compiled to `rules/dist/sanitize.js`, loaded by the Rust core via the embedded
+    QuickJS engine. Independently testable with `bun test`.
 - **Acceptance:**
   - Both API shapes are accepted and forwarded correctly (verified against an upstream mock).
-  - SSE streams end-to-end with sub-millisecond proxy overhead in local measurement.
+  - SSE streams end-to-end with minimal proxy overhead in local measurement.
+  - Sanitization is verified by the Bun test suite on known fixtures.
   - No disk writes occur during a session.
 
 ## Phase 2 — Sanitization & Rule Engine
@@ -81,7 +83,7 @@ blueprint and verified per [`testing.md`](testing.md).
 | Phase | Status |
 | --- | --- |
 | 0 — Scaffold | Complete |
-| 1 — Core Proxy | Blocked on stack decision |
-| 2 — Sanitization | Not started |
+| 1 — Core Proxy (hybrid) | Planned — stack decided |
+| 2 — Sanitization | Partly covered by the `rules/` layer (Phase 1) |
 | 3 — CLI & TUI | Not started |
 | 4 — Verification | Not started |

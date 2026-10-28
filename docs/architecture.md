@@ -79,11 +79,21 @@ This invariant is what makes the "zero disk footprint" success metric verifiable
   See roadmap Phase 3.
 - **Verification** — automated memory-inspection and latency tests. See [testing.md](testing.md).
 
-## What is not yet decided
+## Realization (hybrid, decided)
 
-- **Module/file layout and language** — pending the
-  [stack tradeoff](design-decisions/stack-tradeoffs.md). The component names above are
-  stable; their realization in code is not.
+The stack trade-off is resolved as a **hybrid**: a Rust core
+([`zrai-core`](../crates/zrai-core)) for the proxy hot path, with an embedded TypeScript rule
+layer ([`rules/`](../rules)) for sanitization, loaded via QuickJS. See
+[stack-tradeoffs.md](design-decisions/stack-tradeoffs.md) for the full rationale and the accepted
+footprint trade-off. Component names above are unchanged; their realization is:
+
+- **Ingress Listener, Header Sanitizer (transport parts), Payload Injector, Egress Streamer →
+  Rust** (`zrai-core`).
+- **Context Engine (regex + AST scrubbing) → TypeScript** (`rules/`), executed inside the Rust
+  core via the embedded engine.
+
+Open item:
+
 - **Exact upstream ZDR parameter names per provider** — these vary (OpenRouter uses
   `provider.zdr: true`; others differ). The injector must be a configurable mapping, not
   hard-coded per call site.

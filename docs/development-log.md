@@ -22,5 +22,19 @@ not rewritten when direction changes.
 - **Lessons.** The blueprint's success metrics (<20 MB idle RAM, single-binary story) favor
   Rust; the AST-sanitization richness and iteration speed favor Bun/TypeScript. This tension is
   the crux of the open decision.
-- **Next.** User chooses the stack → Phase 1 (core proxy engine) begins, gated by the decision
-  record in `stack-tradeoffs.md`.
+- **Next (then).** Resolved below — see 2026-10-28b.
+
+## 2026-10-28b — Git initialized; remote pushes live; hybrid stack decided
+
+- **Git.** Repo initialized (`git init -b main`); initial scaffold committed and pushed to
+  `https://github.com/TADSTech/ZRAI.git` (remote `origin`, branch `main`, commit `315d8df`).
+  Auth via the Git Credential Manager with `GCM_INTERACTIVE=never` (HTTPS, no GUI). User
+  directive: commit **and push every change**.
+- **Stack decision — HYBRID.** User asked whether both codebases could be used, sharing
+  benefits at the cost of slightly larger size/footprint. Decision: **Rust core
+  (`crates/zrai-core`) + embedded TypeScript rule layer (`rules/`)** via QuickJS. Records updated
+  in `stack-tradeoffs.md` (status → DECIDED), `architecture.md` (realization), `roadmap.md`
+  (Phase 1 hybrid). The integration contract lives in `stack-tradeoffs.md`.
+- **Next.** Begin Phase 1 hybrid: Rust proxy core (listener, SSE passthrough, ZDR injection,
+  in-memory) + TypeScript sanitization rules (`rules/`) with a Bun test suite; Rust loads the
+  compiled rules via the embedded engine.
