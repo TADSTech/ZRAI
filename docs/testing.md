@@ -90,6 +90,9 @@ results are interpretable and reproducible.
 ## Current verification (2026-10-28)
 
 - **TypeScript rules:** `cd rules && bun test` → 16 pass, 0 fail.
-- **Rust core:** `cargo test --workspace` → 13 pass, 0 fail (config, routes, sanitize, zdr).
-- **Not yet verified:** end-to-end proxy against a mock upstream, SSE pass-through, latency/RAM/
-  disk benchmarks, and the embedded TS-engine path. These remain Phase 1/4 work.
+- **Rust core:** `cargo test --workspace` → 17 pass, 0 fail: 14 unit (config, routes, sanitize,
+  zdr, embedded JS rules) + 3 end-to-end (sanitized payload + ZDR + auth forwarded; Anthropic
+  route; unknown route 404).
+- **Embedded engine:** QuickJS loads `rules/dist/sanitize.js` and sanitizes on the hot path.
+- **Not yet verified:** SSE streaming end-to-end, zero-disk IOPS, latency/RAM benchmarks, and
+  AST-based structural rules. These remain Phase 1/4 work.

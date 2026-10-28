@@ -12,6 +12,10 @@ path = "src/lib.rs"
 name = "zrai"
 path = "src/main.rs"
 
+[features]
+default = ["js"]
+js = ["dep:rquickjs"]
+
 [dependencies]
 axum = "0.7"
 tokio = { version = "1", features = ["full"] }
@@ -23,3 +27,4 @@ bytes = "1"
 regex = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rquickjs = { version = "0.9", optional = true }

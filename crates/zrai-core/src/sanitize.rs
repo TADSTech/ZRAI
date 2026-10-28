@@ -8,10 +8,11 @@
 //! The native rules intentionally mirror only the highest-signal categories (paths, emails,
 //! IPv4, bearer tokens, API keys, PEM keys). The TypeScript layer is the full source of truth.
 
-use crate::config::CustomRule;
+use crate::config::{Config, CustomRule};
 use regex::Regex;
 use serde_json::Value;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 /// Result of sanitizing a request body: the rewritten payload plus per-category counts.
 pub struct Sanitized {
@@ -168,6 +169,33 @@ impl Sanitizer for NativeSanitizer {
 
         Sanitized { value, stripped }
     }
+}
+
+/// Build the active sanitizer: the embedded TypeScript rules when available, else the native
+/// fail-closed fallback. The JS bundle is read once here, at startup (never per request).
+pub fn build(config: &Config) -> Arc<dyn Sanitizer> {
+    #[cfg(feature = "js")]
+    {
+        let path = std::env::var("ZRAI_RULES")
+            .unwrap_or_else(|_| "rules/dist/sanitize.js".to_string());
+        match std::fs::read_to_string(&path) {
+            Ok(source) => {
+                if let Some(js) =
+                    crate::js_sanitizer::JsSanitizer::new(source, config.strict, &config.rules)
+                {
+                    tracing::info!("sanitizer: embedded TypeScript rules from {path}");
+                    return Arc::new(js);
+                }
+                tracing::warn!("sanitizer: JS engine failed to initialize; using native fallback");
+            }
+            Err(_) => {
+                tracing::warn!(
+                    "sanitizer: {path} not found (run `cd rules && bun run build`); using native fallback"
+                );
+            }
+        }
+    }
+    Arc::new(NativeSanitizer::new(config.strict, &config.rules))
 }
 
 #[cfg(test)]

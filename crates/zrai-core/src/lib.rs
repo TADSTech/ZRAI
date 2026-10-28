@@ -11,3 +11,6 @@ pub mod proxy;
 pub mod routes;
 pub mod sanitize;
 pub mod zdr;
+
+#[cfg(feature = "js")]
+pub mod js_sanitizer;

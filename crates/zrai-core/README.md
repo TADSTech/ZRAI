@@ -38,8 +38,13 @@ is read **once at startup**; the daemon never writes to disk during a session.
 
 ## Sanitizer backends
 
-- `NativeSanitizer` — compact Rust fallback covering paths, emails, IPv4, bearer/API tokens, PEM
-  keys, and (strict) env secrets. Used so the proxy never forwards unsanitized context if the
-  JS bundle is missing.
-- Embedded TypeScript rules — `rules/dist/sanitize.js` loaded via a JS engine (next step). The
-  TypeScript layer is the full source of truth and the richer rule set.
+- **Embedded TypeScript rules (default).** `rules/dist/sanitize.js` is loaded once at startup
+  into QuickJS (`rquickjs`) running on a dedicated worker thread (QuickJS is `!Send`). This is
+  the full rule set and the source of truth. Gated by the `js` cargo feature (on by default).
+- **`NativeSanitizer` (fallback).** Compact Rust rules (paths, emails, IPv4, bearer/API tokens,
+  PEM keys, strict env secrets). Used automatically if the JS engine or bundle is unavailable,
+  so the proxy never forwards unsanitized context.
+
+> QuickJS is compiled from source by `rquickjs-sys` (via `cc`), so a C toolchain is required to
+> build the `js` feature. Build without it via `cargo build --no-default-features` (native
+> sanitizer only). Build the bundle first: `cd rules && bun run build`.

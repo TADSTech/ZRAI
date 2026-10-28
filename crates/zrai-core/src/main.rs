@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use zrai_core::config::Config;
 use zrai_core::proxy::{self, AppState};
-use zrai_core::sanitize::NativeSanitizer;
+use zrai_core::sanitize;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::load("zrai.toml")?;
     let port = config.port();
 
-    let sanitizer = Arc::new(NativeSanitizer::new(config.strict, &config.rules));
+    let sanitizer = sanitize::build(&config);
     let client = reqwest::Client::builder().build()?;
 
     let state = AppState {
@@ -28,10 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         sanitizer,
     };
 
-    let app = axum::Router::new()
-        .route("/v1/chat/completions", axum::routing::post(proxy::proxy))
-        .route("/v1/messages", axum::routing::post(proxy::proxy))
-        .with_state(state);
+    let app = proxy::router(state);
 
     let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port));
     let listener = tokio::net::TcpListener::bind(addr).await?;

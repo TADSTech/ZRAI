@@ -83,7 +83,7 @@ blueprint and verified per [`testing.md`](testing.md).
 | Phase | Status |
 | --- | --- |
 | 0 — Scaffold | Complete |
-| 1 — Core Proxy (hybrid) | Core built & tested; TS engine embed next |
-| 2 — Sanitization | Partly covered by the `rules/` layer (Phase 1) |
+| 1 — Core Proxy (hybrid) | Core + embedded TS engine + e2e tests done; SSE/zero-disk verification pending |
+| 2 — Sanitization | Core rules in TS + custom rules; AST structural rules pending |
 | 3 — CLI & TUI | Not started |
 | 4 — Verification | Not started |

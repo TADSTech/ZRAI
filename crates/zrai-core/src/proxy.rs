@@ -25,6 +25,14 @@ pub struct AppState {
     pub sanitizer: Arc<dyn Sanitizer>,
 }
 
+/// Build the axum router for the two supported API shapes.
+pub fn router(state: AppState) -> axum::Router {
+    axum::Router::new()
+        .route("/v1/chat/completions", axum::routing::post(proxy))
+        .route("/v1/messages", axum::routing::post(proxy))
+        .with_state(state)
+}
+
 /// Single handler for both API shapes. The route is resolved from the request path.
 pub async fn proxy(
     State(state): State<AppState>,

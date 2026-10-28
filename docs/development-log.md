@@ -53,3 +53,16 @@ not rewritten when direction changes.
   incremental. The sandbox's executable-write restriction is a CI-environment concern to note.
 - **Next.** Embed `rules/dist/sanitize.js` in the Rust core (rquickjs) behind a `js` feature; add
   an integration test against a local upstream mock; then Phase 3 CLI/TUI.
+
+## 2026-10-28d — Embedded TS engine (hybrid live) + end-to-end tests
+
+- **What.** `js_sanitizer.rs`: QuickJS on a worker thread; loads `rules/dist/sanitize.js` once;
+  `sanitize::build` factory picks JS when available, else native fallback. `js` cargo feature on
+  by default. `proxy::router` extracted; `tests/proxy_e2e.rs` added (mock upstream).
+- **Results.** `cargo test --workspace` → 17 pass (14 unit + 3 e2e). QuickJS compiled from source
+  (MSVC) in ~1m15s incremental.
+- **Gotchas.** rquickjs 0.9 has no `bundled` feature — `rquickjs-sys`'s build.rs compiles
+  `quickjs.c` via `cc`. QuickJS is `!Send`, hence the worker-thread + mpsc design. Sandbox again
+  blocked final exe writes but tests ran green.
+- **Next.** SSE streaming e2e test; zero-disk IOPS verification; Phase 3 CLI/TUI; Phase 4
+  benchmarks (TTFT, RAM).

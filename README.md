@@ -19,19 +19,19 @@ it, and forces ZDR routing, with a verifiable audit trail.
 
 ## Status
 
-**Phase 1 in progress.** The stack is a decided **hybrid**: a Rust proxy core
-(`crates/zrai-core`) + an embedded TypeScript sanitization rule layer (`rules/`).
+**Hybrid is live.** A Rust proxy core (`crates/zrai-core`) runs the TypeScript sanitization rules
+(`rules/`) inside an embedded QuickJS engine — both halves in one process.
 
-- **Rust core:** builds; 13 unit tests pass (routes, sanitize, zdr, config). Proxies with the
-  native sanitizer today.
-- **TypeScript rules:** implemented; 16 Bun tests pass; compiles to `dist/sanitize.js`.
-- **Next:** embed the TS rule layer in the Rust core (QuickJS) so the full rule set runs on the
-  hot path.
+- **Rust core:** `:4040` listener, OpenAI + Anthropic route parity, header scrubbing, ZDR
+  injection, SSE pass-through, in-memory only.
+- **TypeScript rules:** embedded via QuickJS (worker thread); 16 Bun tests pass; compiled to
+  `dist/sanitize.js` and loaded at startup. Native sanitizer remains a fail-closed fallback.
+- **Verified:** `cargo test --workspace` → 17 pass (14 unit + 3 end-to-end).
+- **Next:** SSE streaming + zero-disk verification, Phase 3 CLI/TUI, Phase 4 benchmarks.
 
 See [`stack-tradeoffs.md`](docs/design-decisions/stack-tradeoffs.md) for the decision,
 [`roadmap.md`](docs/roadmap.md) for the plan, and [`testing.md`](docs/testing.md) for
-verification. The core proxy is runnable (`cargo run --release`); the embedded TS rules are the
-next step.
+verification.
 
 ## Four pillars
 

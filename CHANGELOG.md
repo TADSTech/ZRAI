@@ -54,3 +54,22 @@ cold compile ~8m. The sandbox denied writing a few final test binaries to `targe
 but the suite still ran green — an environment quirk, not a code failure.
 **Known gap.** The sanitizer on the hot path is currently the Rust `NativeSanitizer`; embedding
 the TypeScript rule layer (QuickJS) is the immediate next step.
+
+## Episode 5 — 2026-10-28 — Embedded TypeScript engine (hybrid goes live)
+
+**What.** Wired the TypeScript rule layer into the Rust core via QuickJS (`rquickjs`), on a
+dedicated worker thread (QuickJS is `!Send`). The core loads `rules/dist/sanitize.js` once at
+startup and calls it per request. A `js` cargo feature (default on) gates it, with the native
+`NativeSanitizer` as a fail-closed fallback. Extracted a `proxy::router()` helper and added
+end-to-end tests (client → ZRAI → mock upstream).
+**Why.** This is the payoff of the hybrid: Rust owns the hot path, TypeScript owns the rules,
+and both run together in one process.
+**Where.** `crates/zrai-core/src/js_sanitizer.rs`, `src/sanitize.rs` (factory), `src/proxy.rs`
+(`router`), `tests/proxy_e2e.rs`, `Cargo.toml` (`js` feature + rquickjs).
+**Evidence.** `cargo test --workspace` → **17 pass, 0 fail**: 14 unit (incl.
+`embedded_rules_sanitize_paths_and_emails`) + 3 end-to-end (sanitized payload + ZDR + auth
+forwarded; Anthropic route; unknown route → 404). QuickJS compiled from source via MSVC.
+**Gotcha.** `rquickjs 0.9` has no `bundled` feature — `rquickjs-sys`'s `build.rs` compiles
+`quickjs.c` with `cc` automatically.
+**Footprint note.** Embedding QuickJS adds a few MB to the binary/heap — the trade the user
+accepted.
