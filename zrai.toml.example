@@ -1,0 +1,23 @@
+# ZRAI configuration example.
+# Copy this file to `zrai.toml` (gitignored) and edit.
+# Read once at startup; ZRAI never writes to disk during a session.
+
+# port = 4040
+
+# Upstream base URL. If omitted, defaults per route:
+#   /v1/chat/completions -> https://api.openai.com
+#   /v1/messages         -> https://api.anthropic.com
+# upstream = "https://openrouter.ai/api"
+
+# When true, also scrub lower-precision environment-variable secret assignments.
+# strict = true
+
+# Provider ZDR parameters deep-merged into the request root.
+# OpenRouter uses provider.zdr; other providers differ — this is configurable on purpose.
+# [zdr.provider]
+# zdr = true
+
+# Extra sanitization rules (applied after built-ins).
+# [[rules]]
+# pattern = "CODENAME=\\w+"
+# replace = "CODENAME=<redacted>"

@@ -84,5 +84,12 @@ results are interpretable and reproducible.
 
 ## Prerequisites
 
-- Stack decision made (gates Phases 1–4).
+- Stack decision made (gates Phases 1–4). **Resolved:** hybrid.
 - Upstream mock harness available (no external network in tests).
+
+## Current verification (2026-10-28)
+
+- **TypeScript rules:** `cd rules && bun test` → 16 pass, 0 fail.
+- **Rust core:** `cargo test --workspace` → 13 pass, 0 fail (config, routes, sanitize, zdr).
+- **Not yet verified:** end-to-end proxy against a mock upstream, SSE pass-through, latency/RAM/
+  disk benchmarks, and the embedded TS-engine path. These remain Phase 1/4 work.

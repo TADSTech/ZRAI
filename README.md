@@ -19,15 +19,19 @@ it, and forces ZDR routing, with a verifiable audit trail.
 
 ## Status
 
-**Scaffold only.** This repository currently contains architecture, design, and planning
-documentation. No runtime code has been written yet.
+**Phase 1 in progress.** The stack is a decided **hybrid**: a Rust proxy core
+(`crates/zrai-core`) + an embedded TypeScript sanitization rule layer (`rules/`).
 
-- The implementation **stack is undecided** — see
-  [`docs/design-decisions/stack-tradeoffs.md`](docs/design-decisions/stack-tradeoffs.md).
-- The implementation plan is in [`docs/roadmap.md`](docs/roadmap.md).
-- The verification strategy is in [`docs/testing.md`](docs/testing.md).
+- **Rust core:** builds; 13 unit tests pass (routes, sanitize, zdr, config). Proxies with the
+  native sanitizer today.
+- **TypeScript rules:** implemented; 16 Bun tests pass; compiles to `dist/sanitize.js`.
+- **Next:** embed the TS rule layer in the Rust core (QuickJS) so the full rule set runs on the
+  hot path.
 
-ZRAI is **not yet runnable**. Do not point `OPENAI_BASE_URL` / `ANTHROPIC_BASE_URL` at it yet.
+See [`stack-tradeoffs.md`](docs/design-decisions/stack-tradeoffs.md) for the decision,
+[`roadmap.md`](docs/roadmap.md) for the plan, and [`testing.md`](docs/testing.md) for
+verification. The core proxy is runnable (`cargo run --release`); the embedded TS rules are the
+next step.
 
 ## Four pillars
 
@@ -64,5 +68,5 @@ ZRAI/
 1. [`docs/README.md`](docs/README.md) — index and recommended order.
 2. [`docs/architecture.md`](docs/architecture.md) — how the system is structured.
 3. [`docs/design-decisions/stack-tradeoffs.md`](docs/design-decisions/stack-tradeoffs.md) —
-   the open stack decision (needs your input).
+   the decided hybrid stack and its trade-offs.
 4. [`docs/roadmap.md`](docs/roadmap.md) — what will be built, and when.

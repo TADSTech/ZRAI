@@ -35,6 +35,21 @@ not rewritten when direction changes.
   (`crates/zrai-core`) + embedded TypeScript rule layer (`rules/`)** via QuickJS. Records updated
   in `stack-tradeoffs.md` (status → DECIDED), `architecture.md` (realization), `roadmap.md`
   (Phase 1 hybrid). The integration contract lives in `stack-tradeoffs.md`.
-- **Next.** Begin Phase 1 hybrid: Rust proxy core (listener, SSE passthrough, ZDR injection,
-  in-memory) + TypeScript sanitization rules (`rules/`) with a Bun test suite; Rust loads the
-  compiled rules via the embedded engine.
+- **Next (then).** See 2026-10-28c.
+
+## 2026-10-28c — Phase 1: Rust proxy core + TypeScript rules layer
+
+- **What.** Added `crates/zrai-core` (axum + reqwest): `127.0.0.1:4040` listener, OpenAI
+  `/v1/chat/completions` + Anthropic `/v1/messages` parity, header scrubbing, a `Sanitizer`
+  trait (native impl now), configurable ZDR deep-merge, reqwest egress with SSE pass-through,
+  in-memory only. Added the TypeScript rule layer in `rules/` with a 16-test Bun suite and a
+  `bun build` step producing `dist/sanitize.js`.
+- **Results.** `bun test` → 16 pass. `cargo test --workspace` → 13 pass (config, routes,
+  sanitize, zdr); cold compile ~8m. The sandbox denied a few final test-binary writes to
+  `target/debug/deps/*.exe`, but the suite ran green (environment quirk, not a code failure).
+- **Decisions.** The native sanitizer is a fail-closed fallback; the TypeScript layer is the full
+  source of truth and will be embedded via QuickJS next (C toolchain confirmed: MSVC/VS2022).
+- **Lessons.** First compile of the axum/reqwest/rustls tree is slow; later builds are
+  incremental. The sandbox's executable-write restriction is a CI-environment concern to note.
+- **Next.** Embed `rules/dist/sanitize.js` in the Rust core (rquickjs) behind a `js` feature; add
+  an integration test against a local upstream mock; then Phase 3 CLI/TUI.

@@ -1,8 +1,8 @@
 # Quickstart Guide (intended usage)
 
-> **Status: NOT YET RUNNABLE.** ZRAI is at the scaffold stage; `src/` and `tests/` do not exist
-> yet. This guide describes the *intended* workflow once Phase 1 lands. Treat it as the target
-> interface, not current behavior.
+> **Status: PARTIALLY RUNNABLE.** The Rust core (`crates/zrai-core`) builds and its 13 unit
+> tests pass; it proxies with the native sanitizer today. The embedded TypeScript rule layer
+> (the richer sanitizer) is the next step. Commands below are current.
 
 ## 1. Install / build
 
@@ -19,11 +19,14 @@ Create `zrai.toml` (do **not** commit it — see `.gitignore`):
 
 ```toml
 upstream = "https://openrouter.ai/api"
-zdr = { openrouter = { provider_zdr = true } }
-sanitize = { strict = true }
-rules = [
-  { pattern = "API_KEY_[A-Z0-9]+", replace = "<redacted>" }
-]
+strict = true
+
+[zdr.provider]
+zdr = true
+
+[[rules]]
+pattern = "API_KEY_[A-Z0-9]+"
+replace = "<redacted>"
 ```
 
 ## 3. Run
