@@ -19,6 +19,9 @@ zrai.toml
 .pdf_extract*
 *.tmp
 
+# --- agent workspace state (project memory, not source) ---
+.workbuddy-ai/
+
 # --- OS ---
 .DS_Store
 Thumbs.db
